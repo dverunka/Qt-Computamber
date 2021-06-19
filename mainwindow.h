@@ -41,6 +41,10 @@ public slots:
     void showPrimeResult(QVector<int> result);
     void updatePrimeProgress(int progress, int max);
 
+signals:
+    void callFact(int number);
+    void callPrime(int from, int to);
+
 private:
     Ui::MainWindow *ui;
 

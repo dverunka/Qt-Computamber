@@ -12,13 +12,14 @@ void Worker::calcFact(int number) {
 
     isPaused = false;
     isCancelled = false;
+    emit factProgress(0, 100);
 
     QVector<int> result;
     result.append(1);
 
     if (number > 1) {
 
-        for (int i = 2; i < number + 1; i++) {
+        for (int i = 2; i <= number; i++) {
 
             int carry = 0;
             for (int j = 0; j < result.size(); j++) {
@@ -36,7 +37,7 @@ void Worker::calcFact(int number) {
             emit factProgress(i, number);
 
             while (isPaused) {
-                QThread::sleep(500);
+                QThread::msleep(500);
             }
 
             if (isCancelled) {
@@ -45,7 +46,7 @@ void Worker::calcFact(int number) {
         }
     }
 
-    emit factProgress(1, 1);
+    emit factProgress(100, 100);
     emit factResult(result);
 }
 
@@ -53,34 +54,36 @@ void Worker::calcPrime(int from, int to) {
 
     isPaused = false;
     isCancelled = false;
+    emit primeProgress(0, 100);
 
     QVector<int> result;
 
-    // init array
-    bool primes[to + 1];
-    for (int i = 0; i < to + 1; i++) {
+    // allocate memory for array, otherwise it could overflow
+    bool *primes = (bool*) malloc((to + 1) * sizeof (bool));
+    for (int i = 0; i <= to; i++) {
 
         primes[i] = true;
 
         while (isPaused) {
-            QThread::sleep(500);
+            QThread::msleep(500);
         }
 
         if (isCancelled) {
+            free(primes);
             return;
         }
     }
 
     // filter non-prime numbers
     int progress = 0;
-    for (int i = 2; i * i < to + 1; i++) {
+    for (int i = 2; i * i <= to; i++) {
 
         if (primes[i]) {
 
-            for (int j = i * i; j < to + 1; j += i) {
+            for (int j = i * i; j <= to; j += i) {
 
-                if (primes[i]) {
-                    primes[i] = false;
+                if (primes[j]) {
+                    primes[j] = false;
                     progress++;
                 }
             }
@@ -89,33 +92,37 @@ void Worker::calcPrime(int from, int to) {
         emit primeProgress(progress, to);
 
         while (isPaused) {
-            QThread::sleep(500);
+            QThread::msleep(500);
         }
 
         if (isCancelled) {
+            free(primes);
             return;
         }
     }
 
     // return only prime numbers from given range
-    for (int i = from; i < to + 1; i++) {
+    for (int i = from; i <= to; i++) {
 
         if (primes[i]) {
-            result.append(primes[i]);
+
+            result.append(i);
             progress++;
         }
 
-        emit primeProgress(progress, to);
-
         while (isPaused) {
-            QThread::sleep(500);
+            QThread::msleep(500);
         }
 
         if (isCancelled) {
+            free(primes);
             return;
         }
     }
 
-    emit primeProgress(1, 1);
+    // clean memory
+    free(primes);
+
+    emit primeProgress(100, 100);
     emit primeResult(result);
 }
